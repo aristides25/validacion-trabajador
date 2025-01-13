@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación de Trabajador</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <img src="logo.jpg" alt="Logo Empresa" class="logo">
+        <div id="trabajador-info" class="hidden">
+            <div class="status-badge">Trabajador Verificado</div>
+            <img id="foto-trabajador" alt="Foto del Trabajador" class="foto">
+            <img id="qr-imagen" alt="Código QR" class="qr">
+            <h2 id="nombre"></h2>
+            <p id="cedula"></p>
+            <div class="fecha-info">
+                <p id="fecha-ingreso"></p>
+                <p id="valido-hasta"></p>
+            </div>
+        </div>
+        <div id="error" class="hidden">
+            Trabajador no encontrado
+        </div>
+        <div id="loading" class="hidden">
+            Verificando...
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
