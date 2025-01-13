@@ -1,9 +1,3 @@
-const { createClient } = supabase;
-
-const supabaseUrl = 'https://szficrcajedijgqysomg.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6ZmljcmNhamVkaWpncXlzb21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3Nzg2MDIsImV4cCI6MjA1MjM1NDYwMn0.CBd0mEGK5WcBoY84A1iDsvpd6CobZnaN0k2lXX6sgWk';
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const codigoQR = params.get('qr');
@@ -15,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         console.log('Buscando trabajador con código:', codigoQR);
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
             .from('trabajadores')
             .select('*')
             .eq('codigo_qr', codigoQR)
