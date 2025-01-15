@@ -62,8 +62,8 @@ body {
     border-radius: 8px;
 }
 
-#ubicacion {
-    color: #6c757d;
+#cedula, .fecha-info p {
     margin: 0.5rem 0;
-    font-size: 1.1rem;
+    color: #333;
+    font-size: 1rem;
 } 
