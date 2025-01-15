@@ -42,6 +42,7 @@ function mostrarTrabajador(trabajador) {
     document.getElementById('foto-trabajador').src = trabajador.foto_url;
     document.getElementById('nombre').textContent = trabajador.nombre;
     document.getElementById('cedula').textContent = `C.I.: ${trabajador.cedula}`;
+    document.getElementById('ubicacion').textContent = `Ubicación: ${trabajador.ubicacion || 'No especificada'}`;
     document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${new Date(trabajador.fecha_ingreso).toLocaleDateString()}`;
     document.getElementById('valido-hasta').textContent = `Válido hasta: ${new Date(trabajador.valido_hasta).toLocaleDateString()}`;
 }
