@@ -99,17 +99,34 @@ function mostrarTrabajador(trabajador) {
     const fotoContainer = document.getElementById('foto-trabajador');
     fotoContainer.style.display = 'none'; // Ocultar la imagen original
     
+    // Crear contenedor para el iframe
+    const iframeContainer = document.createElement('div');
+    iframeContainer.style.width = '150px';
+    iframeContainer.style.height = '150px';
+    iframeContainer.style.borderRadius = '50%';
+    iframeContainer.style.overflow = 'hidden';
+    iframeContainer.style.position = 'relative';
+    iframeContainer.style.margin = '0 auto';
+    iframeContainer.style.border = '3px solid #007bff';
+    iframeContainer.style.boxShadow = '0 0 10px rgba(0, 123, 255, 0.2)';
+    
     // Crear y mostrar el iframe
     const iframe = document.createElement('iframe');
     iframe.src = fotoUrl;
-    iframe.style.width = '150px';
-    iframe.style.height = '150px';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
     iframe.style.border = 'none';
-    iframe.style.borderRadius = '50%';
-    iframe.style.overflow = 'hidden';
+    iframe.style.position = 'absolute';
+    iframe.style.top = '50%';
+    iframe.style.left = '50%';
+    iframe.style.transform = 'translate(-50%, -50%) scale(1.5)';
+    iframe.style.backgroundColor = 'transparent';
     
-    // Insertar el iframe después de la imagen
-    fotoContainer.parentNode.insertBefore(iframe, fotoContainer.nextSibling);
+    // Agregar iframe al contenedor
+    iframeContainer.appendChild(iframe);
+    
+    // Insertar el contenedor después de la imagen original
+    fotoContainer.parentNode.insertBefore(iframeContainer, fotoContainer.nextSibling);
     
     document.getElementById('nombre').textContent = trabajador.nombre;
     document.getElementById('cedula').textContent = `C.I.: ${trabajador.cedula}`;
