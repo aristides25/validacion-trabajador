@@ -3,7 +3,7 @@ const supabaseUrl = 'https://szficrcajedijgqysomg.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6ZmljcmNhamVkaWpncXlzb21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3Nzg2MDIsImV4cCI6MjA1MjM1NDYwMn0.CBd0mEGK5WcBoY84A1iDsvpd6CobZnaN0k2lXX6sgWk';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-console.log('Versión actualizada del código - v3');
+console.log('Versión actualizada del código - v4');
 
 // Función para convertir URL de Google Drive en URL directa
 function convertirUrlGoogleDrive(url) {
@@ -11,41 +11,23 @@ function convertirUrlGoogleDrive(url) {
     
     console.log('URL original:', url);
     
-    // Si la URL ya está en formato de vista, la retornamos
-    if (url.includes('uc?export=view')) {
-        return url;
-    }
-    
-    // Extraer ID del archivo de diferentes formatos de URL de Google Drive
+    // Extraer ID del archivo
     let fileId = null;
     
     // Formato: https://drive.google.com/file/d/YOUR_FILE_ID/view
-    const match1 = url.match(/\/file\/d\/(.*?)\/view/);
-    if (match1) {
-        fileId = match1[1];
+    const match = url.match(/\/file\/d\/(.*?)(\/|$)/);
+    if (match) {
+        fileId = match[1];
+        console.log('ID del archivo encontrado:', fileId);
+        
+        // Construir URL para previsualización
+        const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+        console.log('URL de previsualización:', embedUrl);
+        
+        return embedUrl;
     }
     
-    // Formato: https://drive.google.com/open?id=YOUR_FILE_ID
-    const match2 = url.match(/id=(.*?)(&|$)/);
-    if (match2) {
-        fileId = match2[1];
-    }
-    
-    // Si no encontramos el ID con los formatos anteriores, intentamos buscar cualquier cadena de 25+ caracteres
-    if (!fileId) {
-        const match3 = url.match(/[-\w]{25,}/);
-        if (match3) {
-            fileId = match3[0];
-        }
-    }
-    
-    if (fileId) {
-        const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-        console.log('URL convertida:', directUrl);
-        return directUrl;
-    }
-    
-    console.log('No se pudo convertir la URL, retornando original');
+    console.log('No se pudo extraer el ID del archivo');
     return url;
 }
 
@@ -110,11 +92,25 @@ function mostrarTrabajador(trabajador) {
     
     console.log('Mostrando datos del trabajador:', trabajador);
     
-    // Convertir la URL de Google Drive antes de asignarla
+    // Convertir la URL de Google Drive y crear un iframe
     const fotoUrl = convertirUrlGoogleDrive(trabajador.foto_url);
     console.log('URL de foto convertida:', fotoUrl);
     
-    document.getElementById('foto-trabajador').src = fotoUrl;
+    const fotoContainer = document.getElementById('foto-trabajador');
+    fotoContainer.style.display = 'none'; // Ocultar la imagen original
+    
+    // Crear y mostrar el iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = fotoUrl;
+    iframe.style.width = '150px';
+    iframe.style.height = '150px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '50%';
+    iframe.style.overflow = 'hidden';
+    
+    // Insertar el iframe después de la imagen
+    fotoContainer.parentNode.insertBefore(iframe, fotoContainer.nextSibling);
+    
     document.getElementById('nombre').textContent = trabajador.nombre;
     document.getElementById('cedula').textContent = `C.I.: ${trabajador.cedula}`;
     document.getElementById('ubicacion').textContent = `Ubicación: ${trabajador.ubicacion || 'No especificada'}`;
