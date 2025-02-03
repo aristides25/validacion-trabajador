@@ -131,7 +131,17 @@ function mostrarTrabajador(trabajador) {
     document.getElementById('nombre').textContent = trabajador.nombre;
     document.getElementById('cedula').textContent = `C.I.: ${trabajador.cedula}`;
     document.getElementById('ubicacion').textContent = `Ubicación: ${trabajador.ubicacion || 'No especificada'}`;
-    document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${new Date(trabajador.fecha_ingreso).toLocaleDateString()}`;
+    
+    // Formatear la fecha correctamente
+    const fecha = new Date(trabajador.fecha_ingreso);
+    const opcionesFecha = { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        timeZone: 'UTC'  // Importante: usar UTC para evitar problemas de zona horaria
+    };
+    document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${fecha.toLocaleDateString('es-PA', opcionesFecha)}`;
+    
     if (trabajador.puesto) {
         document.getElementById('puesto').textContent = `Puesto: ${trabajador.puesto}`;
     }
