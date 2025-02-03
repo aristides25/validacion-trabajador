@@ -3,14 +3,49 @@ const supabaseUrl = 'https://szficrcajedijgqysomg.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6ZmljcmNhamVkaWpncXlzb21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3Nzg2MDIsImV4cCI6MjA1MjM1NDYwMn0.CBd0mEGK5WcBoY84A1iDsvpd6CobZnaN0k2lXX6sgWk';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-console.log('Versión actualizada del código - v2');
+console.log('Versión actualizada del código - v3');
 
 // Función para convertir URL de Google Drive en URL directa
 function convertirUrlGoogleDrive(url) {
-    const fileId = url.match(/[-\w]{25,}/);
-    if (fileId && fileId[0]) {
-        return `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
+    if (!url) return '';
+    
+    console.log('URL original:', url);
+    
+    // Si la URL ya está en formato de vista, la retornamos
+    if (url.includes('uc?export=view')) {
+        return url;
     }
+    
+    // Extraer ID del archivo de diferentes formatos de URL de Google Drive
+    let fileId = null;
+    
+    // Formato: https://drive.google.com/file/d/YOUR_FILE_ID/view
+    const match1 = url.match(/\/file\/d\/(.*?)\/view/);
+    if (match1) {
+        fileId = match1[1];
+    }
+    
+    // Formato: https://drive.google.com/open?id=YOUR_FILE_ID
+    const match2 = url.match(/id=(.*?)(&|$)/);
+    if (match2) {
+        fileId = match2[1];
+    }
+    
+    // Si no encontramos el ID con los formatos anteriores, intentamos buscar cualquier cadena de 25+ caracteres
+    if (!fileId) {
+        const match3 = url.match(/[-\w]{25,}/);
+        if (match3) {
+            fileId = match3[0];
+        }
+    }
+    
+    if (fileId) {
+        const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+        console.log('URL convertida:', directUrl);
+        return directUrl;
+    }
+    
+    console.log('No se pudo convertir la URL, retornando original');
     return url;
 }
 
