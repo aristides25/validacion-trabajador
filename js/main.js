@@ -5,6 +5,15 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 console.log('Versión actualizada del código - v2');
 
+// Función para convertir URL de Google Drive en URL directa
+function convertirUrlGoogleDrive(url) {
+    const fileId = url.match(/[-\w]{25,}/);
+    if (fileId && fileId[0]) {
+        return `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
+    }
+    return url;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const codigoQR = params.get('qr');
@@ -66,7 +75,11 @@ function mostrarTrabajador(trabajador) {
     
     console.log('Mostrando datos del trabajador:', trabajador);
     
-    document.getElementById('foto-trabajador').src = trabajador.foto_url;
+    // Convertir la URL de Google Drive antes de asignarla
+    const fotoUrl = convertirUrlGoogleDrive(trabajador.foto_url);
+    console.log('URL de foto convertida:', fotoUrl);
+    
+    document.getElementById('foto-trabajador').src = fotoUrl;
     document.getElementById('nombre').textContent = trabajador.nombre;
     document.getElementById('cedula').textContent = `C.I.: ${trabajador.cedula}`;
     document.getElementById('ubicacion').textContent = `Ubicación: ${trabajador.ubicacion || 'No especificada'}`;
