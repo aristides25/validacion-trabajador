@@ -8,11 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/validacionqr",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/validacionqr/(.*)",
+      "src": "/(.*)",
       "dest": "/$1"
     }
   ]
