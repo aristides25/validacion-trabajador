@@ -59,9 +59,9 @@ def generar_qr_para_trabajador(trabajador):
 
 def procesar_trabajadores_sin_qr():
     try:
-        # Obtener trabajadores sin QR
-        response = supabase.table("trabajadores").select("*").is_("qr_imagen_url", "null").execute()
-        print(f"Encontrados {len(response.data)} trabajadores sin QR")
+        # Obtener TODOS los trabajadores
+        response = supabase.table("trabajadores").select("*").execute()
+        print(f"Encontrados {len(response.data)} trabajadores para actualizar QR")
         
         for trabajador in response.data:
             print(f"\nProcesando trabajador: {trabajador['nombre']}")
