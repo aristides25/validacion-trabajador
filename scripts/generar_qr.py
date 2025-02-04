@@ -21,8 +21,8 @@ def generar_qr_para_trabajador(trabajador):
         cedula_limpia = ''.join(filter(str.isdigit, trabajador['cedula']))
         print(f"Generando QR para cédula: {cedula_limpia}")
         
-        # URL que contendrá el QR
-        qr_data = f"https://validacion-git-26ae05-aristidesjosenunez123-gmailcoms-projects.vercel.app?qr={cedula_limpia}"
+        # URL que contendrá el QR (usando el nuevo dominio)
+        qr_data = f"https://gestionhbc.com/validacionqr?qr={cedula_limpia}"
         qr.add_data(qr_data)
         qr.make(fit=True)
         
