@@ -2,7 +2,6 @@ import pandas as pd
 from supabase import create_client
 import os
 import requests
-from urllib.parse import urlparse
 import shutil
 import zipfile
 from datetime import datetime
@@ -15,7 +14,6 @@ supabase = create_client(supabase_url, supabase_key)
 def crear_directorios():
     """Crea los directorios necesarios para las imágenes"""
     os.makedirs('temp/imagenes/fotos', exist_ok=True)
-    os.makedirs('temp/imagenes/qr', exist_ok=True)
     print("✓ Directorios temporales creados")
 
 def convertir_url_google_drive(url):
@@ -32,7 +30,7 @@ def convertir_url_google_drive(url):
         return f"https://drive.google.com/uc?export=download&id={file_id}"
     return url
 
-def descargar_foto(url, cedula):
+def descargar_foto(url, cedula, nombre):
     """Descarga la foto de perfil y la guarda localmente"""
     if not url:
         return None
@@ -43,9 +41,12 @@ def descargar_foto(url, cedula):
         return None
         
     try:
-        # Limpiar cédula para nombre de archivo
+        # Limpiar cédula y nombre para nombre de archivo
         cedula_limpia = ''.join(filter(str.isdigit, cedula))
-        ruta_foto = f'temp/imagenes/fotos/{cedula_limpia}.jpg'
+        # Convertir nombre a mayúsculas y reemplazar espacios con guiones bajos
+        nombre_limpio = nombre.upper().replace(' ', '_')
+        nombre_archivo = f'{nombre_limpio}_{cedula_limpia}.jpg'
+        ruta_foto = f'temp/imagenes/fotos/{nombre_archivo}'
         
         # Descargar la foto
         response = requests.get(url_descarga, stream=True)
@@ -53,63 +54,14 @@ def descargar_foto(url, cedula):
             with open(ruta_foto, 'wb') as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
-            print(f"✓ Foto de perfil descargada para {cedula}")
-            return f'%RUTA_BASE%/imagenes/fotos/{cedula_limpia}.jpg'  # Placeholder para ruta
+            print(f"✓ Foto de perfil descargada para {nombre} ({cedula})")
+            return nombre_archivo  # Retornamos el nombre del archivo
         else:
-            print(f"✗ Error descargando foto de perfil para {cedula}: {response.status_code}")
+            print(f"✗ Error descargando foto de perfil para {nombre} ({cedula}): {response.status_code}")
             return None
     except Exception as e:
-        print(f"✗ Error procesando foto de perfil para {cedula}: {str(e)}")
+        print(f"✗ Error procesando foto de perfil para {nombre} ({cedula}): {str(e)}")
         return None
-
-def descargar_qr(cedula):
-    """Descarga el código QR del Storage de Supabase"""
-    try:
-        # Limpiar cédula para nombre de archivo
-        cedula_limpia = ''.join(filter(str.isdigit, cedula))
-        nombre_archivo = f"{cedula_limpia}.png"
-        ruta_qr = f'temp/imagenes/qr/{nombre_archivo}'
-        
-        # Obtener URL pública del QR
-        url_qr = supabase.storage.from_("codigos-qr").get_public_url(nombre_archivo)
-        
-        # Descargar el QR
-        response = requests.get(url_qr, stream=True)
-        if response.status_code == 200:
-            with open(ruta_qr, 'wb') as f:
-                response.raw.decode_content = True
-                shutil.copyfileobj(response.raw, f)
-            print(f"✓ Código QR descargado para {cedula}")
-            return f'%RUTA_BASE%/imagenes/qr/{nombre_archivo}'  # Placeholder para ruta
-        else:
-            print(f"✗ Error descargando QR para {cedula}: {response.status_code}")
-            return None
-    except Exception as e:
-        print(f"✗ Error procesando QR para {cedula}: {str(e)}")
-        return None
-
-def crear_script_configuracion():
-    """Crea un script batch para configurar las rutas en la PC destino"""
-    script_contenido = '''@echo off
-echo Configurador de rutas para Asure ID
-echo ====================================
-
-set /p RUTA_BASE=Ingrese la ruta donde extrajo el ZIP (ejemplo C:\\Carnets): 
-
-echo.
-echo Actualizando rutas en el CSV...
-powershell -Command "(Get-Content datos_carnets.csv) -replace '%%RUTA_BASE%%', '%RUTA_BASE%' | Set-Content -Encoding UTF8 datos_carnets.csv"
-
-echo.
-echo Configuración completada.
-echo El archivo datos_carnets.csv ha sido actualizado con las rutas correctas.
-echo.
-pause
-'''
-    
-    with open('temp/configurar_rutas.bat', 'w') as f:
-        f.write(script_contenido)
-    print("✓ Script de configuración creado")
 
 def crear_readme():
     """Crea un archivo README con instrucciones"""
@@ -119,19 +71,21 @@ def crear_readme():
 1. Extraiga todo el contenido de este ZIP en una carpeta de su elección
    (por ejemplo: C:\\Carnets)
 
-2. Ejecute el archivo "configurar_rutas.bat"
-   - Se le pedirá ingresar la ruta donde extrajo el ZIP
-   - El script actualizará automáticamente las rutas en el CSV
+2. En Asure ID:
+   a. Importe el archivo datos_carnets.csv
+   b. En la plantilla del carnet, configure la foto:
+      - En "Propiedades de la foto", active "Utilizar un origen de datos de carpeta"
+      - En "Origen de datos", seleccione la carpeta "imagenes/fotos" donde extrajo el ZIP
+      - El campo "ruta_foto" del CSV contiene el nombre del archivo de cada foto
 
-3. Una vez configurado, puede usar el archivo datos_carnets.csv en Asure ID
-   - Las rutas de las imágenes ya estarán correctamente configuradas
-   - Las fotos y QRs estarán en las carpetas correspondientes
+3. Las fotos se encuentran en la carpeta imagenes/fotos
+   - Cada foto tiene el formato: NOMBRE_CEDULA.jpg
+   (ejemplo: MARIA_L._VILLARREAL_67151417.jpg)
 
 Nota: Es importante mantener la estructura de carpetas tal como está:
 - datos_carnets.csv
 - imagenes/
-  ├── fotos/
-  └── qr/
+  └── fotos/
 '''
     
     with open('temp/README.txt', 'w', encoding='utf-8') as f:
@@ -148,10 +102,9 @@ def crear_zip():
         with zipfile.ZipFile(zip_nombre, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # Añadir CSV y scripts
             zipf.write('temp/datos_carnets.csv', 'datos_carnets.csv')
-            zipf.write('temp/configurar_rutas.bat', 'configurar_rutas.bat')
             zipf.write('temp/README.txt', 'README.txt')
             
-            # Añadir carpetas de imágenes
+            # Añadir carpeta de fotos
             for carpeta, subcarpetas, archivos in os.walk('temp/imagenes'):
                 for archivo in archivos:
                     ruta_completa = os.path.join(carpeta, archivo)
@@ -173,7 +126,7 @@ def limpiar_temporales():
         print(f"✗ Error eliminando temporales: {str(e)}")
 
 def exportar_csv():
-    """Exporta los datos de trabajadores a CSV y descarga todas las imágenes"""
+    """Exporta los datos de trabajadores a CSV y descarga las fotos"""
     print("\nIniciando exportación de datos y descarga de imágenes...")
     
     # Crear directorios necesarios
@@ -183,23 +136,20 @@ def exportar_csv():
     response = supabase.table("trabajadores").select("*").execute()
     df = pd.DataFrame(response.data)
     
-    # Procesar fotos y QRs
+    # Procesar fotos
     rutas_fotos = []
-    rutas_qr = []
     
     for index, row in df.iterrows():
         print(f"\nProcesando trabajador: {row['nombre']}")
         # Descargar foto de perfil
-        ruta_foto = descargar_foto(row.get('foto_url'), row['cedula'])
+        ruta_foto = descargar_foto(row.get('foto_url'), row['cedula'], row['nombre'])
         rutas_fotos.append(ruta_foto if ruta_foto else '')
-        
-        # Descargar código QR
-        ruta_qr = descargar_qr(row['cedula'])
-        rutas_qr.append(ruta_qr if ruta_qr else '')
     
-    # Añadir columnas con rutas locales
+    # Añadir columna con ruta de foto
     df['ruta_foto'] = rutas_fotos
-    df['ruta_qr'] = rutas_qr
+    
+    # Modificar las rutas para incluir solo el nombre del archivo
+    df['ruta_foto'] = df['ruta_foto'].apply(lambda x: x if x else '')
     
     # Seleccionar datos para el CSV
     datos_carnets = df[[
@@ -208,16 +158,14 @@ def exportar_csv():
         'fecha_ingreso',
         'ubicacion',
         'puesto',
-        'ruta_foto',
-        'ruta_qr'
+        'ruta_foto'
     ]]
     
     # Guardar CSV en carpeta temporal
     datos_carnets.to_csv('temp/datos_carnets.csv', index=False, encoding='utf-8-sig')
     print("\n✓ CSV generado temporalmente")
     
-    # Crear archivos adicionales
-    crear_script_configuracion()
+    # Crear archivo README
     crear_readme()
     
     # Crear ZIP con todos los archivos
@@ -227,8 +175,9 @@ def exportar_csv():
         print(f"\nInstrucciones:")
         print("1. Transfiere el archivo ZIP a la computadora con Asure ID")
         print("2. Extrae el ZIP en una carpeta de tu elección")
-        print("3. Ejecuta el archivo 'configurar_rutas.bat' y sigue las instrucciones")
-        print("4. Una vez configurado, usa el archivo datos_carnets.csv en Asure ID")
+        print("3. En Asure ID:")
+        print("   - Importa el archivo datos_carnets.csv")
+        print("   - Configura la carpeta 'imagenes/fotos' como origen de datos para las fotos")
     
     # Limpiar archivos temporales
     limpiar_temporales()
