@@ -43,40 +43,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('Código QR recibido:', codigoQR);
         
-        // Formatear la cédula con guiones (maneja cualquier formato)
-        const formatearCedula = (numeros) => {
-            // Si la cédula ya tiene guiones, la retornamos tal cual
-            if (numeros.includes('-')) return numeros;
-            
-            // Si tiene letras (como E-8-72977), intentamos reconstruir el formato
-            if (/[A-Za-z]/.test(numeros)) {
-                const letra = numeros.match(/[A-Za-z]/)[0];
-                const soloNumeros = numeros.replace(/[A-Za-z]/g, '');
-                return `${letra}-${soloNumeros}`;
-            }
-            
-            // Para cédulas que son solo números
-            if (numeros.length === 8) {
-                return `${numeros.slice(0,1)}-${numeros.slice(1,4)}-${numeros.slice(4)}`;
-            }
-            
-            // Para otros casos, intentamos un formato básico X-XXX-RESTO
-            const primerDigito = numeros.slice(0,1);
-            const siguientesTres = numeros.slice(1,4);
-            const resto = numeros.slice(4);
-            return `${primerDigito}-${siguientesTres}-${resto}`;
-        };
+        // Limpiar la cédula (quitar guiones)
+        const limpiarCedula = (cedula) => cedula.replace(/-/g, '');
         
-        const cedulaFormateada = formatearCedula(codigoQR);
-        console.log('Buscando trabajador con cédula:', cedulaFormateada);
-        
-        // Construir la consulta manualmente para verificar
+        // Construir la consulta
         const query = supabase
             .from('trabajadores')
-            .select('*')
-            .eq('cedula', cedulaFormateada);
+            .select('*');
             
-        console.log('URL de la consulta:', query.url);
+        console.log('Ejecutando consulta...');
         
         let { data, error } = await query;
             
@@ -84,12 +59,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error de Supabase:', error);
             throw error;
         }
-            
-        console.log('Resultado de búsqueda:', { data });
         
-        if (data && data.length > 0) {
-            console.log('¡Trabajador encontrado!', data[0]);
-            mostrarTrabajador(data[0]);
+        // Buscar el trabajador comparando cédulas sin guiones
+        const trabajador = data.find(t => limpiarCedula(t.cedula) === codigoQR);
+            
+        if (trabajador) {
+            console.log('¡Trabajador encontrado!', trabajador);
+            mostrarTrabajador(trabajador);
         } else {
             console.log('No se encontró el trabajador');
             mostrarError('Trabajador no encontrado');
@@ -156,20 +132,4 @@ function mostrarTrabajador(trabajador) {
     const dia = fecha.getUTCDate().toString().padStart(2, '0');
     const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0');
     const año = fecha.getUTCFullYear();
-    document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${dia}/${mes}/${año}`;
-    
-    if (trabajador.puesto) {
-        document.getElementById('puesto').textContent = `Puesto: ${trabajador.puesto}`;
-    }
-}
-
-function mostrarError(mensaje) {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('trabajador-info').classList.add('hidden');
-    
-    const errorDiv = document.getElementById('error');
-    errorDiv.textContent = mensaje;
-    errorDiv.classList.remove('hidden');
-    
-    console.error('Error mostrado al usuario:', mensaje);
-} 
+    document.getElementById('fecha-ingreso').textContent = `
