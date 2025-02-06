@@ -132,4 +132,20 @@ function mostrarTrabajador(trabajador) {
     const dia = fecha.getUTCDate().toString().padStart(2, '0');
     const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0');
     const año = fecha.getUTCFullYear();
-    document.getElementById('fecha-ingreso').textContent = `
+    document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${dia}/${mes}/${año}`;
+    
+    if (trabajador.puesto) {
+        document.getElementById('puesto').textContent = `Puesto: ${trabajador.puesto}`;
+    }
+}
+
+function mostrarError(mensaje) {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('trabajador-info').classList.add('hidden');
+    
+    const errorDiv = document.getElementById('error');
+    errorDiv.textContent = mensaje;
+    errorDiv.classList.remove('hidden');
+    
+    console.error('Error mostrado al usuario:', mensaje);
+}
