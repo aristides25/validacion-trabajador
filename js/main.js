@@ -134,13 +134,11 @@ function mostrarTrabajador(trabajador) {
     
     // Formatear la fecha correctamente
     const fecha = new Date(trabajador.fecha_ingreso);
-    const opcionesFecha = { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric',
-        timeZone: 'UTC'  // Importante: usar UTC para evitar problemas de zona horaria
-    };
-    document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${fecha.toLocaleDateString('es-PA', opcionesFecha)}`;
+    // Formatear manualmente la fecha en DD/MM/YYYY
+    const dia = fecha.getUTCDate().toString().padStart(2, '0');
+    const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0');
+    const año = fecha.getUTCFullYear();
+    document.getElementById('fecha-ingreso').textContent = `Fecha de Ingreso: ${dia}/${mes}/${año}`;
     
     if (trabajador.puesto) {
         document.getElementById('puesto').textContent = `Puesto: ${trabajador.puesto}`;
