@@ -43,10 +43,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('Código QR recibido:', codigoQR);
         
-        // Formatear la cédula con guiones (X-XXX-XXXX)
+        // Formatear la cédula con guiones (maneja cualquier formato)
         const formatearCedula = (numeros) => {
-            if (numeros.length !== 8) return numeros;
-            return `${numeros.slice(0,1)}-${numeros.slice(1,4)}-${numeros.slice(4)}`;
+            // Si la cédula ya tiene guiones, la retornamos tal cual
+            if (numeros.includes('-')) return numeros;
+            
+            // Si tiene letras (como E-8-72977), intentamos reconstruir el formato
+            if (/[A-Za-z]/.test(numeros)) {
+                const letra = numeros.match(/[A-Za-z]/)[0];
+                const soloNumeros = numeros.replace(/[A-Za-z]/g, '');
+                return `${letra}-${soloNumeros}`;
+            }
+            
+            // Para cédulas que son solo números
+            if (numeros.length === 8) {
+                return `${numeros.slice(0,1)}-${numeros.slice(1,4)}-${numeros.slice(4)}`;
+            }
+            
+            // Para otros casos, intentamos un formato básico X-XXX-RESTO
+            const primerDigito = numeros.slice(0,1);
+            const siguientesTres = numeros.slice(1,4);
+            const resto = numeros.slice(4);
+            return `${primerDigito}-${siguientesTres}-${resto}`;
         };
         
         const cedulaFormateada = formatearCedula(codigoQR);
