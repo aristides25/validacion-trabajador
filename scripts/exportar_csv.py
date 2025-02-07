@@ -100,7 +100,7 @@ def crear_zip():
     
     try:
         with zipfile.ZipFile(zip_nombre, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Añadir CSV y scripts
+            # Añadir CSV y README
             zipf.write('temp/datos_carnets.csv', 'datos_carnets.csv')
             zipf.write('temp/README.txt', 'README.txt')
             
@@ -108,7 +108,8 @@ def crear_zip():
             for carpeta, subcarpetas, archivos in os.walk('temp/imagenes'):
                 for archivo in archivos:
                     ruta_completa = os.path.join(carpeta, archivo)
-                    ruta_en_zip = ruta_completa.replace('temp/', '')
+                    ruta_en_zip = os.path.join('imagenes', os.path.relpath(ruta_completa, 'temp/imagenes'))
+                    print(f"Añadiendo al ZIP: {ruta_en_zip}")
                     zipf.write(ruta_completa, ruta_en_zip)
         
         print(f"\n✓ Archivo ZIP creado: {zip_nombre}")
@@ -126,15 +127,21 @@ def limpiar_temporales():
         print(f"✗ Error eliminando temporales: {str(e)}")
 
 def exportar_csv():
-    """Exporta los datos de trabajadores a CSV y descarga las fotos"""
+    """Exporta los datos de trabajadores pendientes a CSV y descarga las fotos"""
     print("\nIniciando exportación de datos y descarga de imágenes...")
     
     # Crear directorios necesarios
     crear_directorios()
     
-    # Obtener trabajadores
-    response = supabase.table("trabajadores").select("*").execute()
+    # Obtener trabajadores pendientes o por actualizar
+    response = supabase.table("trabajadores").select("*").in_("estado_carnet", ["pendiente", "actualizar"]).execute()
     df = pd.DataFrame(response.data)
+    
+    if len(df) == 0:
+        print("No hay trabajadores pendientes para exportar")
+        return
+        
+    print(f"\nEncontrados {len(df)} trabajadores pendientes de carnet")
     
     # Procesar fotos
     rutas_fotos = []
@@ -162,7 +169,7 @@ def exportar_csv():
     ]]
     
     # Guardar CSV en carpeta temporal
-    datos_carnets.to_csv('temp/datos_carnets.csv', index=False, encoding='utf-8-sig')
+    datos_carnets.to_csv('temp/datos_carnets.csv', index=False, encoding='cp1252')
     print("\n✓ CSV generado temporalmente")
     
     # Crear archivo README
@@ -172,6 +179,11 @@ def exportar_csv():
     zip_generado = crear_zip()
     
     if zip_generado:
+        # Actualizar estado de los trabajadores a 'impreso'
+        trabajadores_ids = df['id'].tolist()
+        supabase.table("trabajadores").update({"estado_carnet": "impreso"}).in_("id", trabajadores_ids).execute()
+        print("\n✓ Estado de trabajadores actualizado a 'impreso'")
+        
         print(f"\nInstrucciones:")
         print("1. Transfiere el archivo ZIP a la computadora con Asure ID")
         print("2. Extrae el ZIP en una carpeta de tu elección")

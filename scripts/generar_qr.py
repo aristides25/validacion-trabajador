@@ -49,15 +49,15 @@ def generar_qr_para_trabajador(trabajador):
         return False
 
 def generar_todos_los_qr():
-    """Genera códigos QR para todos los trabajadores en la base de datos"""
+    """Genera códigos QR para todos los trabajadores pendientes en la base de datos"""
     try:
         # Crear directorio para QRs
         crear_directorio_qr()
         
-        # Obtener todos los trabajadores
-        response = supabase.table("trabajadores").select("*").execute()
+        # Obtener trabajadores pendientes o por actualizar
+        response = supabase.table("trabajadores").select("*").in_("estado_carnet", ["pendiente", "actualizar"]).execute()
         total_trabajadores = len(response.data)
-        print(f"\nEncontrados {total_trabajadores} trabajadores")
+        print(f"\nEncontrados {total_trabajadores} trabajadores pendientes de generar QR")
         
         # Contador de QRs generados
         qrs_generados = 0
