@@ -30,8 +30,8 @@ def convertir_url_google_drive(url):
         return f"https://drive.google.com/uc?export=download&id={file_id}"
     return url
 
-def descargar_foto(url, cedula, nombre):
-    """Descarga la foto de perfil y la guarda localmente"""
+def descargar_foto(url, id_foto, nombre, cedula):
+    """Descarga la foto de perfil y la guarda con el ID como nombre"""
     if not url:
         return None
         
@@ -41,11 +41,8 @@ def descargar_foto(url, cedula, nombre):
         return None
         
     try:
-        # Limpiar cédula y nombre para nombre de archivo
-        cedula_limpia = ''.join(filter(str.isdigit, cedula))
-        # Convertir nombre a mayúsculas y reemplazar espacios con guiones bajos
-        nombre_limpio = nombre.upper().replace(' ', '_')
-        nombre_archivo = f'{nombre_limpio}_{cedula_limpia}.jpg'
+        # Asegurar que el nombre del archivo tenga la extensión .jpg
+        nombre_archivo = f'{id_foto}.jpg'
         ruta_foto = f'temp/imagenes/fotos/{nombre_archivo}'
         
         # Descargar la foto
@@ -54,8 +51,18 @@ def descargar_foto(url, cedula, nombre):
             with open(ruta_foto, 'wb') as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
-            print(f"✓ Foto de perfil descargada para {nombre} ({cedula})")
-            return nombre_archivo  # Retornamos el nombre del archivo
+            
+            # Verificar que el archivo se creó correctamente
+            if os.path.exists(ruta_foto):
+                print(f"✓ Foto de perfil descargada para {nombre} ({cedula})")
+                print(f"  Archivo guardado como: {nombre_archivo}")
+                # Verificar que la extensión sea visible
+                if not ruta_foto.lower().endswith('.jpg'):
+                    print("  ⚠ Advertencia: El archivo podría no tener la extensión .jpg visible")
+                return nombre_archivo
+            else:
+                print(f"✗ Error: El archivo no se guardó correctamente para {nombre} ({cedula})")
+                return None
         else:
             print(f"✗ Error descargando foto de perfil para {nombre} ({cedula}): {response.status_code}")
             return None
@@ -134,7 +141,7 @@ def exportar_csv():
     crear_directorios()
     
     # Obtener trabajadores pendientes o por actualizar
-    response = supabase.table("trabajadores").select("*").in_("estado_carnet", ["pendiente", "actualizar"]).execute()
+    response = supabase.table("trabajadores").select("*").in_("estado_carnet", ["pendiente", "actualizar"]).order("nombre").execute()
     df = pd.DataFrame(response.data)
     
     if len(df) == 0:
@@ -143,29 +150,28 @@ def exportar_csv():
         
     print(f"\nEncontrados {len(df)} trabajadores pendientes de carnet")
     
+    # Generar IDs únicos
+    df['id_foto'] = range(1, len(df) + 1)
+    
     # Procesar fotos
     rutas_fotos = []
-    
     for index, row in df.iterrows():
         print(f"\nProcesando trabajador: {row['nombre']}")
-        # Descargar foto de perfil
-        ruta_foto = descargar_foto(row.get('foto_url'), row['cedula'], row['nombre'])
+        # Descargar foto de perfil usando el ID
+        ruta_foto = descargar_foto(row.get('foto_url'), row['id_foto'], row['nombre'], row['cedula'])
         rutas_fotos.append(ruta_foto if ruta_foto else '')
     
-    # Añadir columna con ruta de foto
-    df['ruta_foto'] = rutas_fotos
-    
-    # Modificar las rutas para incluir solo el nombre del archivo
-    df['ruta_foto'] = df['ruta_foto'].apply(lambda x: x if x else '')
+    # Convertir formato de fecha de YYYY-MM-DD a DD-MM-YYYY
+    df['fecha_ingreso'] = pd.to_datetime(df['fecha_ingreso']).dt.strftime('%d-%m-%Y')
     
     # Seleccionar datos para el CSV
     datos_carnets = df[[
+        'id_foto',
         'nombre',
         'cedula',
         'fecha_ingreso',
         'ubicacion',
-        'puesto',
-        'ruta_foto'
+        'puesto'
     ]]
     
     # Guardar CSV en carpeta temporal
@@ -189,7 +195,9 @@ def exportar_csv():
         print("2. Extrae el ZIP en una carpeta de tu elección")
         print("3. En Asure ID:")
         print("   - Importa el archivo datos_carnets.csv")
-        print("   - Configura la carpeta 'imagenes/fotos' como origen de datos para las fotos")
+        print("   - En la opción 'Importación de archivos de imágenes':")
+        print("     * Selecciona la carpeta 'imagenes/fotos'")
+        print("     * Usa la columna 'id_foto' como referencia")
     
     # Limpiar archivos temporales
     limpiar_temporales()
