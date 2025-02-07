@@ -60,8 +60,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw error;
         }
         
-        // Buscar el trabajador comparando cédulas sin guiones
-        const trabajador = data.find(t => limpiarCedula(t.cedula) === codigoQR);
+        // Buscar el trabajador primero con la cédula normal
+        let trabajador = data.find(t => limpiarCedula(t.cedula) === codigoQR);
+
+        // Si no se encuentra, intentar quitando la letra E
+        if (!trabajador) {
+            console.log('Intentando búsqueda sin letra E...');
+            trabajador = data.find(t => {
+                const cedulaLimpia = limpiarCedula(t.cedula).replace(/^E/i, '');
+                return cedulaLimpia === codigoQR;
+            });
+        }
             
         if (trabajador) {
             console.log('¡Trabajador encontrado!', trabajador);
