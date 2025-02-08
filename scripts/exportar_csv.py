@@ -80,19 +80,24 @@ def crear_readme():
 
 2. En Asure ID:
    a. Importe el archivo datos_carnets.csv
-   b. En la plantilla del carnet, configure la foto:
+   b. Configure los enlaces de campos:
+      - Enlace cada columna del CSV con su campo correspondiente en la plantilla
+      - Asegúrese de enlazar 'id_foto' con 'identifier'
+
+   c. En la plantilla del carnet, configure la foto:
       - En "Propiedades de la foto", active "Utilizar un origen de datos de carpeta"
       - En "Origen de datos", seleccione la carpeta "imagenes/fotos" donde extrajo el ZIP
-      - El campo "ruta_foto" del CSV contiene el nombre del archivo de cada foto
+      - Deje "Record ID (predeterminado)" como campo clave
 
 3. Las fotos se encuentran en la carpeta imagenes/fotos
-   - Cada foto tiene el formato: NOMBRE_CEDULA.jpg
-   (ejemplo: MARIA_L._VILLARREAL_67151417.jpg)
+   - Cada foto tiene un ID único como nombre (ejemplo: 1.jpg, 2.jpg, etc.)
+   - Los IDs coinciden con la columna 'id_foto' del CSV
 
 Nota: Es importante mantener la estructura de carpetas tal como está:
 - datos_carnets.csv
 - imagenes/
   └── fotos/
+      └── (archivos .jpg)
 '''
     
     with open('temp/README.txt', 'w', encoding='utf-8') as f:
@@ -185,11 +190,6 @@ def exportar_csv():
     zip_generado = crear_zip()
     
     if zip_generado:
-        # Actualizar estado de los trabajadores a 'impreso'
-        trabajadores_ids = df['id'].tolist()
-        supabase.table("trabajadores").update({"estado_carnet": "impreso"}).in_("id", trabajadores_ids).execute()
-        print("\n✓ Estado de trabajadores actualizado a 'impreso'")
-        
         print(f"\nInstrucciones:")
         print("1. Transfiere el archivo ZIP a la computadora con Asure ID")
         print("2. Extrae el ZIP en una carpeta de tu elección")
