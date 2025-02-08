@@ -43,8 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('Código QR recibido:', codigoQR);
         
-        // Limpiar la cédula (quitar guiones)
-        const limpiarCedula = (cedula) => cedula.replace(/-/g, '');
+        // Limpiar la cédula (mantener solo números)
+        const limpiarCedula = (cedula) => cedula.replace(/[^0-9]/g, '');
         
         // Construir la consulta
         const query = supabase
@@ -60,14 +60,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw error;
         }
         
+        console.log('Datos recibidos de Supabase:', data);
+        console.log('Cantidad de trabajadores en la base:', data.length);
+        
         // Buscar el trabajador primero con la cédula normal
-        let trabajador = data.find(t => limpiarCedula(t.cedula) === codigoQR);
+        let trabajador = data.find(t => {
+            const cedulaLimpia = limpiarCedula(t.cedula);
+            console.log(`Comparando: QR=${codigoQR} con cédula=${t.cedula} (limpia=${cedulaLimpia})`);
+            return cedulaLimpia === codigoQR;
+        });
 
         // Si no se encuentra, intentar quitando la letra E
         if (!trabajador) {
             console.log('Intentando búsqueda sin letra E...');
             trabajador = data.find(t => {
                 const cedulaLimpia = limpiarCedula(t.cedula).replace(/^E/i, '');
+                console.log(`Comparando (sin E): QR=${codigoQR} con cédula=${t.cedula} (limpia=${cedulaLimpia})`);
                 return cedulaLimpia === codigoQR;
             });
         }
