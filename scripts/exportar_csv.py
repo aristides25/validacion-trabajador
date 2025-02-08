@@ -7,8 +7,8 @@ import zipfile
 from datetime import datetime
 
 # Configuración de Supabase
-supabase_url = "https://szficrcajedijgqysomg.supabase.co"
-supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6ZmljcmNhamVkaWpncXlzb21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3Nzg2MDIsImV4cCI6MjA1MjM1NDYwMn0.CBd0mEGK5WcBoY84A1iDsvpd6CobZnaN0k2lXX6sgWk"
+supabase_url = "https://chqfivjyzmiytdnbfvna.supabase.co"
+supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNocWZpdmp5em1peXRkbmJmdm5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkwMzk4MTgsImV4cCI6MjA1NDYxNTgxOH0.ytiUkjfQOn2214qN4iO8kkcZILGkoJguz1x5Uk-n2p8"
 supabase = create_client(supabase_url, supabase_key)
 
 def crear_directorios():
