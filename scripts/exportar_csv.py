@@ -14,6 +14,7 @@ supabase = create_client(supabase_url, supabase_key)
 def crear_directorios():
     """Crea los directorios necesarios para las imágenes"""
     os.makedirs('temp/imagenes/fotos', exist_ok=True)
+    os.makedirs('temp/imagenes/qr', exist_ok=True)
     print("✓ Directorios temporales creados")
 
 def convertir_url_google_drive(url):
@@ -70,6 +71,24 @@ def descargar_foto(url, id_foto, nombre, cedula):
         print(f"✗ Error procesando foto de perfil para {nombre} ({cedula}): {str(e)}")
         return None
 
+def copiar_qr(id_foto, nombre, cedula):
+    """Copia el QR generado a la carpeta temporal"""
+    try:
+        # Ruta del QR generado
+        ruta_origen = f'codigos_qr/{id_foto}.png'
+        ruta_destino = f'temp/imagenes/qr/{id_foto}.png'
+        
+        if os.path.exists(ruta_origen):
+            shutil.copy2(ruta_origen, ruta_destino)
+            print(f"✓ QR copiado para {nombre} ({cedula})")
+            return True
+        else:
+            print(f"✗ QR no encontrado para {nombre} ({cedula})")
+            return False
+    except Exception as e:
+        print(f"✗ Error copiando QR: {str(e)}")
+        return False
+
 def crear_readme():
     """Crea un archivo README con instrucciones"""
     readme_contenido = '''Instrucciones para Asure ID
@@ -82,22 +101,31 @@ def crear_readme():
    a. Importe el archivo datos_carnets.csv
    b. Configure los enlaces de campos:
       - Enlace cada columna del CSV con su campo correspondiente en la plantilla
-      - Asegúrese de enlazar 'id_foto' con 'identifier'
+      - Asegúrese de enlazar 'id_foto' con 'identificador'
 
    c. En la plantilla del carnet, configure la foto:
       - En "Propiedades de la foto", active "Utilizar un origen de datos de carpeta"
       - En "Origen de datos", seleccione la carpeta "imagenes/fotos" donde extrajo el ZIP
-      - Deje "Record ID (predeterminado)" como campo clave
+      - En campo clave seleccione "identificador"
 
-3. Las fotos se encuentran en la carpeta imagenes/fotos
-   - Cada foto tiene un ID único como nombre (ejemplo: 1.jpg, 2.jpg, etc.)
+   d. Configure el campo del código QR de la misma manera:
+      - En sus propiedades, active "Utilizar un origen de datos de carpeta"
+      - En "Origen de datos", seleccione la carpeta "imagenes/qr"
+      - En campo clave seleccione "identificador"
+
+3. Las imágenes se encuentran en las siguientes carpetas:
+   - Fotos: imagenes/fotos/
+   - QRs: imagenes/qr/
+   - Cada imagen tiene un ID único como nombre (ejemplo: 1.jpg, 1.png)
    - Los IDs coinciden con la columna 'id_foto' del CSV
 
 Nota: Es importante mantener la estructura de carpetas tal como está:
 - datos_carnets.csv
 - imagenes/
-  └── fotos/
-      └── (archivos .jpg)
+  ├── fotos/
+  │   └── (archivos .jpg)
+  └── qr/
+      └── (archivos .png)
 '''
     
     with open('temp/README.txt', 'w', encoding='utf-8') as f:
@@ -158,13 +186,18 @@ def exportar_csv():
     # Generar IDs únicos
     df['id_foto'] = range(1, len(df) + 1)
     
-    # Procesar fotos
+    # Procesar fotos y QRs
     rutas_fotos = []
+    qrs_copiados = []
     for index, row in df.iterrows():
         print(f"\nProcesando trabajador: {row['nombre']}")
         # Descargar foto de perfil usando el ID
         ruta_foto = descargar_foto(row.get('foto_url'), row['id_foto'], row['nombre'], row['cedula'])
         rutas_fotos.append(ruta_foto if ruta_foto else '')
+        
+        # Copiar QR usando el mismo ID
+        qr_copiado = copiar_qr(row['id_foto'], row['nombre'], row['cedula'])
+        qrs_copiados.append(qr_copiado)
     
     # Convertir formato de fecha de YYYY-MM-DD a DD-MM-YYYY
     df['fecha_ingreso'] = pd.to_datetime(df['fecha_ingreso']).dt.strftime('%d-%m-%Y')
@@ -196,8 +229,9 @@ def exportar_csv():
         print("3. En Asure ID:")
         print("   - Importa el archivo datos_carnets.csv")
         print("   - En la opción 'Importación de archivos de imágenes':")
-        print("     * Selecciona la carpeta 'imagenes/fotos'")
-        print("     * Usa la columna 'id_foto' como referencia")
+        print("     * Para las fotos: selecciona la carpeta 'imagenes/fotos'")
+        print("     * Para los QRs: selecciona la carpeta 'imagenes/qr'")
+        print("     * En ambos casos, usa la columna 'id_foto' como referencia")
     
     # Limpiar archivos temporales
     limpiar_temporales()
